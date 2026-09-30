@@ -16,7 +16,7 @@ jobs:
     name: Build extension binaries
     uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v1.5-variegata
     with:
-      duckdb_version: v1.5.4
+      duckdb_version: v1.5.5
       ci_tools_version: v1.5-variegata
       extension_name: hdfs
       # The Rust FFI bridge (hdfs-bridge) is built via Corrosion during cmake.
@@ -30,7 +30,7 @@ jobs:
     name: Code Quality Check
     uses: duckdb/extension-ci-tools/.github/workflows/_extension_code_quality.yml@v1.5-variegata
     with:
-      duckdb_version: v1.5.4
+      duckdb_version: v1.5.5
       ci_tools_version: v1.5-variegata
       extension_name: hdfs
       format_checks: "format;tidy"
@@ -50,16 +50,16 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          pattern: hdfs-v1.5.4-extension-*
+          pattern: hdfs-v1.5.5-extension-*
           path: artifacts
 
       - name: Collect per-platform binaries
         run: |
           mkdir -p dist
-          for dir in artifacts/hdfs-v1.5.4-extension-*; do
-            arch="${dir#artifacts/hdfs-v1.5.4-extension-}"
-            cp "$dir/hdfs.duckdb_extension" "dist/hdfs.duckdb_extension.v1.5.4.${arch}"
-            gzip -k "dist/hdfs.duckdb_extension.v1.5.4.${arch}"
+          for dir in artifacts/hdfs-v1.5.5-extension-*; do
+            arch="${dir#artifacts/hdfs-v1.5.5-extension-}"
+            cp "$dir/hdfs.duckdb_extension" "dist/hdfs.duckdb_extension.v1.5.5.${arch}"
+            gzip -k "dist/hdfs.duckdb_extension.v1.5.5.${arch}"
           done
           (cd dist && sha256sum * > SHA256SUMS)
           ls -l dist
