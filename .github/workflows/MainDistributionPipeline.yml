@@ -53,16 +53,48 @@ jobs:
           pattern: hdfs-v1.5.5-extension-*
           path: artifacts
 
+      # DuckDB only loads files ending in .duckdb_extension and takes the
+      # extension name from the part before the first dot, so the platform
+      # goes in the middle: hdfs.<arch>.duckdb_extension.
       - name: Collect per-platform binaries
         run: |
           mkdir -p dist
           for dir in artifacts/hdfs-v1.5.5-extension-*; do
             arch="${dir#artifacts/hdfs-v1.5.5-extension-}"
-            cp "$dir/hdfs.duckdb_extension" "dist/hdfs.duckdb_extension.v1.5.5.${arch}"
-            gzip -k "dist/hdfs.duckdb_extension.v1.5.5.${arch}"
+            cp "$dir/hdfs.duckdb_extension" "dist/hdfs.${arch}.duckdb_extension"
           done
           (cd dist && sha256sum * > SHA256SUMS)
           ls -l dist
+
+      - name: Write release notes
+        run: |
+          cat > notes.md <<'EOF'
+          `hdfs`: a native HDFS filesystem for DuckDB. Read and write `hdfs://` URLs directly, with no JVM and no `libhdfs`.
+
+          Built for **DuckDB v1.5.5**. The extension only loads in that exact version.
+
+          ### Install
+
+          Download the file for your platform, then start DuckDB with unsigned extensions allowed (these binaries are not signed by DuckDB):
+
+          ```sh
+          duckdb -unsigned
+          ```
+          ```sql
+          LOAD '/path/to/hdfs.linux_amd64.duckdb_extension';
+          ```
+
+          From Python: `duckdb.connect(config={"allow_unsigned_extensions": "true"})`, then `con.load_extension("/path/to/file")`.
+
+          | Platform | File |
+          |---|---|
+          | Linux x86_64 | `hdfs.linux_amd64.duckdb_extension` |
+          | Linux ARM64 | `hdfs.linux_arm64.duckdb_extension` |
+          | macOS Apple Silicon | `hdfs.osx_arm64.duckdb_extension` |
+          | macOS Intel | `hdfs.osx_amd64.duckdb_extension` |
+
+          Windows and DuckDB-Wasm are not supported. Keep the `hdfs.` prefix when renaming a file: DuckDB takes the extension name from the part of the filename before the first dot. Checksums are in `SHA256SUMS`.
+          EOF
 
       - name: Create release
         env:
@@ -70,6 +102,6 @@ jobs:
         run: |
           gh release create "${GITHUB_REF_NAME}" dist/* \
             --repo "${GITHUB_REPOSITORY}" \
-            --title "${GITHUB_REF_NAME}" \
-            --generate-notes \
+            --title "${GITHUB_REF_NAME} (DuckDB v1.5.5)" \
+            --notes-file notes.md \
             --verify-tag
